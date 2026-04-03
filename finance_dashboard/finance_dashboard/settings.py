@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.users",
     "apps.records",
+    "apps.analytics",
     
     'django.contrib.admin',
     'django.contrib.auth',

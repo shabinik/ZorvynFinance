@@ -24,6 +24,7 @@ class User(AbstractUser, TimeStampedModel):
     def save(self, *args, **kwargs):
         if self.is_superuser:
             self.role = Role.ADMIN
+            self.is_staff = True
         super().save(*args, **kwargs) 
 
     def __str__(self):
