@@ -15,6 +15,13 @@ class DashboardSummaryView(APIView):
 
     def get(self, request):
         qs = FinancialRecord.objects.all()
+        
+        date_from = request.query_params.get("date_from")
+        date_to = request.query_params.get("date_to")
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
 
         income = qs.filter(record_type = "income").aggregate(total = Sum("amount"))["total"] or 0
         expense = qs.filter(record_type = "expense").aggregate(total = Sum("amount"))["total"] or 0

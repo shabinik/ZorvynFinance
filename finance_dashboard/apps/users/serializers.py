@@ -22,12 +22,27 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_role(self, value):
         request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return value
         if value == "admin" and request.user.role != "admin":
             raise serializers.ValidationError("Only admin can assign admin role")
         return value
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only = True)
+
+    class Meta:
+        model = User
+        fields = ["email", "username", "first_name", "last_name", "password"]
+
+    def create(self, validated_data):
+        validated_data["role"] = "viewer"
+        return User.objects.create_user(**validated_data) 
+
 
 # JWT Custom Serializer
 """

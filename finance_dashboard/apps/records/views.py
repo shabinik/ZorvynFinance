@@ -35,7 +35,7 @@ class FinancialRecordViewSet(viewsets.ModelViewSet):
     ordering = ["-date"]
 
     def get_queryset(self):
-        qs = FinancialRecord.objects.select_related("category", "created_by")
+        qs = FinancialRecord.all_objects.all().select_related("category", "created_by")
 
         include_deleted = self.request.query_params.get("include_deleted")
 
