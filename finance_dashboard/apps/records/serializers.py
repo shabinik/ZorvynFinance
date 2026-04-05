@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Category, FinancialRecord
+from datetime import date
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -13,6 +14,17 @@ class FinancialRecordSerializer(serializers.ModelSerializer):
         model = FinancialRecord
         fields = "__all__"
         read_only_fields = ["created_by"]
+
+
+    def validate_date(self, value):
+        if value > date.today():
+            raise serializers.ValidationError("Future dates are not allowed")
+        return value
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be positive")
+        return value
 
     def validate(self, attrs):
         category = attrs.get("category")

@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",
+    "rest_framework.authtoken",
 
     "apps.core",
     "apps.users",
@@ -133,6 +135,16 @@ REST_FRAMEWORK = {
 
     # Custom error handling
     "EXCEPTION_HANDLER": "apps.core.exceptions.custom_exception_handler",
+
+    # Rate Limiting (Throttle)
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "100/min",
+        "anon": "20/min",
+    },
 }
 
 

@@ -2,9 +2,10 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth import get_user_model
-
 from .serializers import UserSerializer, CustomTokenSerializer
 from .permissions import IsAdmin
 from apps.core.responses import success
@@ -20,6 +21,19 @@ class LoginView(TokenObtainPairView):
         response = super().post(request, *args, **kwargs)
         return success(response.data, message="Login successful")
     
+
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return success(message="Logged Out")
+        except Exception:
+            return success(message="Invalid token")
+
+
+
 # ADMIN USER MANAGEMENT
 # create view
 # list view
