@@ -21,6 +21,21 @@ A production-quality backend for a role-based finance management system, built w
 
 ---
 
+### Test Credentials (Live API)
+
+A default admin account is automatically created on deployment.
+Use these credentials to log in at `/api/v1/users/auth/login/`:
+
+| Field    | Value                        |
+|----------|------------------------------|
+| Email    | admin@zorvynfinance.com      |
+| Username | admin                        |
+| Password | Admin@1234!                  |
+
+> **Tip:** Log in via `POST /api/v1/users/auth/login/`, copy the `access` 
+> token from the response, click **Authorize** in Swagger UI, 
+> and paste `Bearer <token>` to unlock all protected endpoints
+
 ## Project Overview
 
 This backend powers a finance dashboard where different users interact with financial records based on their role. It supports:
@@ -67,7 +82,7 @@ Django REST Framework
 
 | Concern | Choice | Why |
 |---|---|---|
-| Framework | Django 4.2 + DRF 3.15 | Mature, batteries-included, excellent ORM |
+| Framework | Django 5.1.4 + DRF 3.17 | Mature, batteries-included, excellent ORM |
 | Database | PostgreSQL | Industry-standard for financial systems; strong decimal precision, concurrency |
 | Auth | JWT (SimpleJWT) | Stateless, scalable; refresh + blacklist on logout |
 | API Docs | drf-spectacular (Swagger) | Auto-generated from code, always in sync, interactive UI |
@@ -75,47 +90,52 @@ Django REST Framework
 | Rate Limiting | DRF throttling | Per-scope limits for auth vs regular endpoints |
 
 ---
-
+````
 ## Project Structure
 
-```
-ZorvynFinance/
+````
+## Project Structure
+ZorvynFinance/                        ← GitHub repo root
+├── build.sh                          ← Render build script
+├── render.yaml                       ← Render infrastructure config
+├── .gitignore
+├── README.md
 │
-├── finance_dashboard/
-│   ├── settings.py         # All Django config (JWT, DRF, CORS, logging)
-│   ├── urls.py             # Root URL routing (versioned under /api/v1/)
-│   └── wsgi.py
-│
-├── apps/
-│   ├── core/               # Shared utilities used by all apps
-│   │   ├── models.py       # BaseModel (UUID + timestamps) + SoftDeleteModel
-│   │   ├── permissions.py  # IsAdmin, IsAnalystOrAbove, IsViewer, IsOwnerOrAdmin
-│   │   ├── exceptions.py   # Consistent error envelope for all DRF errors
-│   │
-│   ├── users/              # Authentication & user management, Admin (superuser)
-│   │   ├── models.py       # User (email,username login, role field)
-│   │   ├── serializers.py  # Registration, JWT custom payload, user detail
-│   │   ├── views.py        # Register, Login, Admin add Admin and Analyst, Logout, /me, user CRUD
-│   │   └── urls/           # /api/v1/auth/*  and /api/v1/users/*
-│   │
-│   ├── records/            # Financial records management
-│   │   ├── models.py       # Category + FinancialRecord (with soft-delete)
-│   │   ├── serializers.py  # Read/write serializers with nested category
-│   │   ├── views.py        # CRUD views with role-based permissions
-│   │   ├── filters.py      # FinancialRecordFilter (date, amount, type, category)
-│   │   └── urls.py         # /api/v1/records/*
-│   │
-│   └── analytics/          # Dashboard summary APIs
-│       ├── serializers.py  # Read-only serializers for aggregated data
-│       ├── views.py        # Summary, category breakdown, trends, recent activity
-│       └── urls.py         # /api/v1/analytics/*
-│
-├── manage.py
-├── requirements.txt
-├── pytest.ini
-├── .env.example
-└── README.md
-```
+└── finance_dashboard/                ← Django project root
+    ├── manage.py
+    ├── requirements.txt
+    ├── .env.example
+    │
+    ├── finance_dashboard/            ← Django config package
+    │   ├── settings.py
+    │   ├── urls.py
+    │   └── wsgi.py
+    │
+    └── apps/
+        ├── core/                     ← Shared utilities
+        │   ├── models.py             ← TimeStampedModel, SoftDeleteModel
+        │   ├── exceptions.py         ← Consistent error envelope
+        │   ├── middleware.py         ← Request logging
+        │   └── responses.py         ← success() / error() helpers
+        │
+        ├── users/                    ← Auth & user management
+        │   ├── models.py             ← User model with roles
+        │   ├── serializers.py        ← JWT, registration, user detail
+        │   ├── views.py              ← Login, logout, register, profile, CRUD
+        │   ├── permissions.py        ← IsAdmin, IsAnalystOrAdmin, IsAdminOrReadOnly
+        │   └── urls.py
+        │
+        ├── records/                  ← Financial records
+        │   ├── models.py             ← Category, FinancialRecord (soft-delete)
+        │   ├── serializers.py
+        │   ├── views.py
+        │   ├── filters.py            ← Date, amount, type filters
+        │   └── urls.py
+        │
+        └── analytics/                ← Dashboard APIs
+            ├── views.py              ← Summary, trends, breakdown, recent
+            └── urls.py
+
 
 ---
 
@@ -179,10 +199,10 @@ When prompted, enter your email, username, and password. This user will have the
 |---|---|---|
 | `SECRET_KEY` | (insecure default) | Django secret key — **change in production** |
 | `DEBUG` | `True` | Set to `False` in production |
-| `ALLOWED_HOSTS` | `*` | Comma-separated list of allowed hostnames |
+| `ALLOWED_HOSTS` | `*` | "localhost","127.0.0.1",".onrender.com", |
 | `DB_NAME` | `zorvyndb` | PostgreSQL database name |
 | `DB_USER` | `zorvynuser` | PostgreSQL user |
-| `DB_PASSWORD` | `******` | PostgreSQL password |
+| `DB_PASSWORD` | `zorvyn123` | PostgreSQL password |
 | `DB_HOST` | `localhost` | PostgreSQL host |
 | `DB_PORT` | `5432` | PostgreSQL port |
 
@@ -190,14 +210,14 @@ When prompted, enter your email, username, and password. This user will have the
 
 ## Running the Server
 
-```bash
-python manage.py runserver
-```
+- **Live API (Render):** `https://zorvynfinance.onrender.com/api/v1/`
+- **Swagger UI:** `https://zorvynfinance.onrender.com/api/docs/`
+- **ReDoc:** `https://zorvynfinance.onrender.com/api/redoc/`
+- **Django Admin:** `https://zorvynfinance.onrender.com/admin/`
 
+### Local Development
 - **API Base URL:** `http://localhost:8000/api/v1/`
 - **Swagger UI:** `http://localhost:8000/api/docs/`
-- **ReDoc:** `http://localhost:8000/api/redoc/`
-- **Django Admin:** `http://localhost:8000/admin/`
 
 ---
 
@@ -224,9 +244,10 @@ POST /api/v1/auth/register/
   "password": "SecurePass99!",
   "password_confirm": "SecurePass99!"
 }
+```
 
 **Create User (Admin Only)**
-```json
+````json
 POST /api/v1/users/
 {
   "email": "alice@example.com",
@@ -235,7 +256,7 @@ POST /api/v1/users/
   "password": "SecurePass99!",
   "role": "analyst"
 }
-```
+````
 
 **Login response includes user info:**
 ```json
@@ -337,22 +358,22 @@ POST /api/v1/records/
 | GET | `/analytics/summary/` | Total income, expenses, net balance |
 | GET | `/analytics/categories/` | Per-category totals for pie charts |
 | GET | `/analytics/trends/monthly/` | Monthly income vs expense for last N months |
-| GET | `/analytics/trends/weekly/` | Weekly income vs expense for last N weeks |
-| GET | `/analytics/recent/` | Latest N transactions (activity feed) |
+| GET | `/analytics/recent/` | Latest N transactions |
+| GET | `/analytics/split/` | Income vs expense percentage split |
 
 **Summary response:**
-```json
+````json
 {
-  "total_income": "45000.00",
-  "total_expenses": "18300.00",
-  "net_balance": "26700.00",
-  "record_count": 47,
-  "income_count": 22,
-  "expense_count": 25,
-  "date_from": null,
-  "date_to": null
+  "success": true,
+  "message": "Success",
+  "data": {
+    "total_income": 45000.00,
+    "total_expense": 18300.00,
+    "balance": 26700.00,
+    "count": 47
+  }
 }
-```
+````
 
 **Monthly trends query params:**
 ```
